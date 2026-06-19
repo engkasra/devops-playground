@@ -1,0 +1,57 @@
+# Alert rules for the devops-demo service.
+# Metric names match exactly what prometheus-fastapi-instrumentator exposes
+# (verified against the running /metrics endpoint):
+#   http_requests_total{handler,method,status}          (status grouped as 2xx/4xx/5xx)
+#   http_request_duration_highr_seconds_bucket{le}      (high-resolution latency histogram)
+#   process_resident_memory_bytes
+#   up                                                  (added by Prometheus per scrape target)
+
+groups:
+  - name: devops-demo.rules
+    rules:
+      # 1) The service stopped responding to scrapes.
+      - alert: ServiceDown
+        expr: up{job="devops-demo"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "devops-demo is down"
+          description: "Prometheus has not been able to scrape devops-demo for over 1 minute."
+
+      # 2) More than 5% of requests are server errors (5xx) over the last 5 minutes.
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status="5xx"}[5m]))
+          /
+          sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx error rate"
+          description: "5xx error ratio is {{ printf \"%.2f\" $value }} (threshold 0.05) over the last 5m."
+
+      # 3) p95 request latency above 500ms over the last 5 minutes.
+      - alert: HighRequestLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(http_request_duration_highr_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 latency"
+          description: "p95 latency is {{ printf \"%.3f\" $value }}s (threshold 0.5s)."
+
+      # 4) Process memory growth (useful for spotting leaks). 200MB here for a tiny app.
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="devops-demo"} > 200e6
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High resident memory"
+          description: "Resident memory is {{ printf \"%.0f\" $value }} bytes (threshold 200MB) for 10m."

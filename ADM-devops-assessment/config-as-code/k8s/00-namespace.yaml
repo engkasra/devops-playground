@@ -1,0 +1,7 @@
+# Dedicated namespace so the app is isolated. Apply this first.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops-demo
+  labels:
+    app.kubernetes.io/part-of: devops-demo

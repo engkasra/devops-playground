@@ -1,0 +1,93 @@
+# GitLab CI/CD pipeline: test -> build -> scan -> deploy
+#
+# Uses Docker-in-Docker to build the image and push it to GitLab's built-in
+# Container Registry. Trivy scans the built image. The deploy stage is gated
+# (manual) and explained below.
+
+stages:
+  - test
+  - build
+  - scan
+  - deploy
+
+variables:
+  # GitLab provides CI_REGISTRY_IMAGE automatically for the project registry.
+  IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  IMAGE_LATEST: "$CI_REGISTRY_IMAGE:latest"
+  DOCKER_TLS_CERTDIR: "/certs"
+
+# ---------------------------------------------------------------------------
+# 1) TEST — run the unit/smoke tests
+# ---------------------------------------------------------------------------
+test:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir -r app/requirements.txt pytest httpx
+  script:
+    - python -m pytest -q
+
+# ---------------------------------------------------------------------------
+# 2) BUILD — build the Docker image and push to the registry
+# ---------------------------------------------------------------------------
+build:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker build -t "$IMAGE_TAG" -t "$IMAGE_LATEST" .
+    - docker push "$IMAGE_TAG"
+    - docker push "$IMAGE_LATEST"
+
+# ---------------------------------------------------------------------------
+# 3) SCAN — Trivy security scan of the built image
+#    Reports everything; fails the job on HIGH/CRITICAL vulnerabilities.
+#    Flip allow_failure to true while you triage, or remove --exit-code to
+#    make it advisory only.
+# ---------------------------------------------------------------------------
+scan:
+  stage: scan
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache/"
+  script:
+    - trivy --version
+    # Human-readable report (always succeeds).
+    - trivy image --severity HIGH,CRITICAL "$IMAGE_TAG"
+    # Gate: non-zero exit if HIGH/CRITICAL are present.
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "$IMAGE_TAG"
+  cache:
+    paths:
+      - .trivycache/
+  allow_failure: false
+
+# ---------------------------------------------------------------------------
+# 4) DEPLOY — simulated by default, with the real commands shown.
+#
+#    To make it real: add a KUBE_CONFIG CI/CD variable (base64 of a kubeconfig
+#    with deploy rights) and uncomment the kubectl block. The job is `manual`
+#    so a human triggers production deploys.
+# ---------------------------------------------------------------------------
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  when: manual
+  environment:
+    name: production
+  script:
+    - echo "Deploying image $IMAGE_TAG"
+    # ---- SIMULATED (default) ----
+    - echo "[simulate] kubectl set image deployment/devops-demo app=$IMAGE_TAG -n devops-demo"
+    - echo "[simulate] kubectl rollout status deployment/devops-demo -n devops-demo"
+    # ---- REAL (uncomment after configuring KUBE_CONFIG) ----
+    # - mkdir -p ~/.kube && echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+    # - kubectl apply -f k8s/00-namespace.yaml
+    # - kubectl apply -f k8s/
+    # - kubectl set image deployment/devops-demo app=$IMAGE_TAG -n devops-demo
+    # - kubectl rollout status deployment/devops-demo -n devops-demo --timeout=120s

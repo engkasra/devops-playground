@@ -1,0 +1,11 @@
+# Non-sensitive configuration injected into the container as environment vars.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devops-demo-config
+  namespace: devops-demo
+data:
+  APP_NAME: "devops-demo"
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  PORT: "8000"

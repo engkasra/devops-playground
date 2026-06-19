@@ -1,0 +1,4 @@
+# Pinned to versions verified to work together. Bump deliberately.
+fastapi==0.137.2
+uvicorn[standard]==0.49.0
+prometheus-fastapi-instrumentator==8.0.0

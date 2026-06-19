@@ -1,0 +1,35 @@
+# Promtail tails Docker container logs and ships them to Loki.
+# It uses the Docker socket for service discovery and keeps only containers
+# labelled logging=promtail (our app).
+server:
+  http_listen_port: 9080
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_label_logging']
+        regex: 'promtail'
+        action: keep
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+    pipeline_stages:
+      # The app already emits one JSON object per line; parse it so the fields
+      # (level, path, status_code, request_id, ...) become queryable in Loki.
+      - json:
+          expressions:
+            level: level
+            path: path
+            status_code: status_code
+            request_id: request_id
+      - labels:
+          level:
