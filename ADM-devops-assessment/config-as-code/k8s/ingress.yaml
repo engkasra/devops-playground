@@ -6,8 +6,8 @@ kind: Ingress
 metadata:
   name: devops-demo
   namespace: devops-demo
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  # annotations:
+  #   nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: public
   rules:
