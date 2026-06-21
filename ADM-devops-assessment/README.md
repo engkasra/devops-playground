@@ -265,4 +265,33 @@ The registry variables (`CI_REGISTRY`, `CI_REGISTRY_IMAGE`, `CI_REGISTRY_USER`,
   format supports both.
 * Trivy and the controller manifests pull `:latest`; pin specific versions for
   reproducible production pipelines.
-```
+
+
+---
+
+## Project Note
+
+This project was prepared as a simple DevOps technical assessment and interview demo for **ADM Group Logistic**.
+
+The main purpose of this project is to demonstrate a practical end-to-end DevOps workflow around a small FastAPI backend service, including:
+
+* Docker-based containerization
+* Kubernetes deployment using MicroK8s
+* Ingress-based service exposure
+* ConfigMap and Secret usage
+* Health checks with liveness and readiness probes
+* Horizontal Pod Autoscaling configuration
+* Prometheus metrics exposure
+* Grafana-based observability
+* Structured JSON logging
+* GitLab CI/CD pipeline design
+* Security scanning with Trivy
+* Documentation and rollback strategy
+
+The application business logic is intentionally simple, because the focus of the project is on infrastructure, deployment, automation, monitoring, and operational readiness.
+
+Prepared by:
+
+**Kasra Abdollahi**
+DevOps & Cloud Engineer
+
