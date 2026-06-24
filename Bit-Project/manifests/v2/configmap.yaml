@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crypto-exchange-config
+  namespace: crypto-exchange
+data:
+  DATABASE_NAME: "crypto_exchange"
+  DATABASE_USER: "crypto_user"
+  DATABASE_HOST: "external-postgres-service"
+  DATABASE_PORT: "5432"
+  DEBUG: "True"
+  DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,crypto-exchange.local,*"

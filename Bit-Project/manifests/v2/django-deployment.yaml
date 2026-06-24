@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-app
+  namespace: crypto-exchange
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django-app
+  template:
+    metadata:
+      labels:
+        app: django-app
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z external-postgres-service 5432; do
+            echo "Waiting for external PostgreSQL at external-postgres-service:5432..."
+            sleep 5
+          done
+          echo "External PostgreSQL is ready!"
+      containers:
+      - name: django
+        image: engksa75/test-bit:latest
+        ports:
+        - containerPort: 8000
+        - containerPort: 8001
+        env:
+        - name: DATABASE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: crypto-exchange-config
+              key: DATABASE_NAME
+        - name: DATABASE_USER
+          valueFrom:
+            configMapKeyRef:
+              name: crypto-exchange-config
+              key: DATABASE_USER
+        - name: DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crypto-exchange-config
+              key: DATABASE_HOST
+        - name: DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crypto-exchange-config
+              key: DATABASE_PORT
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crypto-exchange-secret
+              key: DATABASE_PASSWORD
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: crypto-exchange-secret
+              key: DJANGO_SECRET_KEY
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: crypto-exchange-config
+              key: DEBUG
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        #### TEMPORARILY
+        #livenessProbe:
+        #  httpGet:
+        #    path: /
+        #   port: 8000
+        #  initialDelaySeconds: 90
+        #  periodSeconds: 30
+        #  timeoutSeconds: 10
+        #readinessProbe:
+        #  httpGet:
+        #    path: /
+        #    port: 8000
+        # initialDelaySeconds: 60
+        #  periodSeconds: 10
+        #  timeoutSeconds: 5

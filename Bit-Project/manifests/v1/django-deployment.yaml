@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-app
+  labels:
+    app: django
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django
+  template:
+    metadata:
+      labels:
+        app: django
+    spec:
+      containers:
+      - name: django
+        image: engksa75/test-bit:v1
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DEBUG
+          value: "True"
+        - name: API_KEY
+          value: ""
+        - name: DATABASE_NAME
+          value: "crypto"
+        - name: DATABASE_USER
+          value: "django"
+        - name: DATABASE_PASSWORD
+          value: "django123"
+        - name: DATABASE_HOST
+          value: "91.107.171.123"
+        - name: DATABASE_PORT
+          value: "5432"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-service
+spec:
+  selector:
+    app: django
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
+

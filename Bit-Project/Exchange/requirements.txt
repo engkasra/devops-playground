@@ -1,0 +1,9 @@
+bitcoin==1.1.42
+Django==5.2.6
+eth_account==0.13.7
+Pillow==11.3.0
+plotly==6.3.0
+python-dotenv==1.1.1
+pytz==2025.2
+Requests==2.32.5
+django-prometheus==2.3.1

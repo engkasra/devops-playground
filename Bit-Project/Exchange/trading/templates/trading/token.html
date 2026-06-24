@@ -1,0 +1,213 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class="pagetitle">
+      <h1>{{ title }}</h1>
+    <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="#">Trading</a></li>
+          <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section dashboard">
+    <div class="row">
+
+        <!-- Left side columns -->
+        <div class="col-lg-8">
+          <div class="row">
+
+            <!-- Chart -->
+            <div class="col-12">
+              <div class="card">
+
+                <div class="card-body">
+                  <h5 class="card-title">{{ object.name.capitalize }} <span>| Chart</span></h5>
+
+                  {{ graph|safe }}
+
+                </div>
+
+              </div>
+            </div><!-- End Chart -->
+
+            <!-- Trading Form - Buy-->
+            <div class="col-lg-6">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <h5 class="card-title">Buy <span>| {{ object.name.capitalize }}</span></h5>
+                                <!-- Advanced Form Elements -->
+              <form method="POST">
+                {% csrf_token %}
+
+                <div class="row mb-2">
+                  <div class="col-sm-12">
+
+                    <label class="form-label">Available {{user_usdt_wallet.quantity}} USDT</label>
+                    <div class="input-group mb-3">
+                      <span class="input-group-text">Actual Price</span>
+                      <input type="text" class="form-control" value="{{ object.actual_price }}" disabled>
+                      <span class="input-group-text">USDT</span>
+                    </div>
+
+                    <div class="input-group mb-3">
+                      <span class="input-group-text">  Amount  </span>
+                      <input type="number" name="amount" class="form-control" value="0.00" step="0.0001"  min="0.0001">
+                      <span class="input-group-text">{{ object.symbol }}</span>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                      <button type="submit" name="buy_token" class="btn btn-success">Buy {{ object.symbol }}</button>
+                    </div>
+
+                  </div>
+                </div>
+
+              </form><!-- End General Form Elements -->
+
+                </div>
+
+              </div>
+            </div><!-- End Trading Form - Buy-->
+
+            <!-- Trading Form - Sell-->
+            <div class="col-lg-6">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <h5 class="card-title">Sell <span>| {{ object.name.capitalize }}</span></h5>
+                                <!-- Advanced Form Elements -->
+              <form method="POST">
+                {% csrf_token %}
+
+                <div class="row mb-2">
+                  <div class="col-sm-12">
+
+                    <label class="form-label">Available {{user_token_wallet.quantity}} {{ object.symbol }}</label>
+                    <div class="input-group mb-3">
+                      <span class="input-group-text">Actual Price</span>
+                      <input type="text" class="form-control" value="{{ object.actual_price }}" disabled>
+                      <span class="input-group-text">USDT</span>
+                    </div>
+
+                    <div class="input-group mb-3">
+                      <span class="input-group-text">  Amount  </span>
+                      <input name="amount" type="number" class="form-control" value="0.00" step="0.0001"  min="0.0001">
+                      <span class="input-group-text">{{ object.symbol }}</span>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                      <button type="submit" name="sell_token" class="btn btn-danger">Sell {{ object.symbol }}</button>
+                    </div>
+
+                  </div>
+                </div>
+
+              </form><!-- End General Form Elements -->
+
+                </div>
+
+              </div>
+            </div><!-- End Trading Form - Sell-->
+
+            <!-- Recent Transactions -->
+            <div class="col-12">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <h5 class="card-title">Recent Transactions <span>| {{ object.name.capitalize }}</span></h5>
+
+                  <table class="table table-borderless datatable">
+                    <thead>
+
+                      <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Date Time</th>
+                      </tr>
+
+                    </thead>
+                    <tbody>
+                      {%for transaction in history%}
+                      <tr class="text">
+                        <td scope="row">#{{transaction.id}}</td>
+                        {%if transaction.type == 'buy'%}
+                          <th><a class="text-success">{{transaction.quantity}} {{object.symbol}}</a></th>
+                          <th><a class="text-success">{{transaction.transaction_price}} USDT</a></th>
+                        {%else%}
+                          <th><a class="text-danger">{{transaction.quantity}} {{object.symbol}}</a></th>
+                          <th><a class="text-danger">{{transaction.transaction_price}} USDT</a></th>
+                        {%endif%}
+
+                        <td>{{transaction.date_time}}</td>
+                      </tr>
+                      {%endfor%}
+                    </tbody>
+                  </table>
+
+                </div>
+
+              </div>
+            </div><!-- End Recent Transactions -->
+
+            <!-- Top CryptoCurrencies -->
+            <div class="col-12">
+              <div class="card top-selling overflow-auto">
+
+                <div class="filter">
+                  <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                  <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                    <li class="dropdown-header text-start">
+                      <h6>Filter</h6>
+                    </li>
+
+                    <li><a class="dropdown-item" href="#">Highest Price</a></li>
+                    <li><a class="dropdown-item" href="#">This Month</a></li>
+                    <li><a class="dropdown-item" href="#">This Year</a></li>
+                  </ul>
+                </div>
+
+                <div class="card-body pb-0">
+                  <h5 class="card-title">Top CryptoCurrencies <span>| Tabel</span></h5>
+
+                  <table class="table table-borderless">
+                    <thead>
+                      <tr>
+                        <th scope="col">Preview</th>
+                        <th scope="col">Token</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">1h</th>
+                        <th scope="col">24h</th>
+                        <th scope="col">7d</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {% for token in tokens %}
+                      <tr>
+                        <th scope="row"><a href="{% url 'token-detail' slug=token.name %}"><img src="{{ token.image.url }}" alt=""></a></th>
+                        <td><a href="{% url 'token-detail' slug=token.name %}" class="card-title">{{ token.name.capitalize }} <span> {{ token.symbol }}</span></a></td>
+                        <td class="fw-bold">${{token.actual_price}}</td>
+                        <td>???</td>
+                        <td>???</td>
+                        <td>???</td>
+                      </tr>
+
+                    {% endfor %}
+                    </tbody>
+                  </table>
+
+                </div>
+
+              </div>
+            </div><!-- End Top CryptoCurrencies -->
+
+          </div>
+        </div><!-- End Left side columns -->
+
+
+    </div>
+</section>
+{% endblock %}
